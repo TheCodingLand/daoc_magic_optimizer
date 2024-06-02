@@ -244,40 +244,13 @@ def initialize(base, crit, critmin, critmax, available_points):
     table_updater = TableUpdater(base=base, crit=crit, critmin=critmin, critmax=critmax, data=delve_data, available_points=available_points)
     summary_df, df = table_updater.get_total_cost_and_dps(), table_updater.update_table()
     summary = table_updater.get_summary()
-    return summary, df, 0, 0, 0, table_updater.get_total_invested_points(), available_points
+    graph = plot_dps_curve()
+    return summary, df, 0, 0, 0, table_updater.get_total_invested_points(), available_points, graph
 
 def automatic_optimization(points_available: int):
     summary_df, df, mom_level, wp_level, aa_level, invested_points = table_updater.optimize_levels()
     return summary_df, df, mom_level, wp_level, aa_level, invested_points, points_available
 
-def create_graphs(summary_df):
-    total_cost, total_dps_mom, total_dps_wp, total_dps_aa, total_dps = table_updater.get_total_cost_and_dps()
-    
-    # Total Investment vs. DPS
-    fig_investment_dps = px.line(summary_df, x='Total Cost', y='DPS', title='Total Investment vs. DPS')
-    
-    # Skill Levels vs. DPS Contribution
-    skills = ['MOM', 'WP', 'AA']
-    levels = [table_updater.levels[skill.lower()] for skill in skills]
-    dps_values = [total_dps_mom, total_dps_wp, total_dps_aa]
-    fig_skills_dps = go.Figure(data=[
-        go.Bar(name='DPS Contribution', x=skills, y=dps_values),
-        go.Scatter(name='Skill Levels', x=skills, y=levels, mode='lines+markers', yaxis='y2')
-    ])
-    fig_skills_dps.update_layout(
-        title='Skill Levels vs. DPS Contribution',
-        yaxis=dict(title='DPS'),
-        yaxis2=dict(title='Skill Levels', overlaying='y', side='right')
-    )
-    
-    # Crit Chance vs. DPS
-    crit_values = list(range(0, 101, 5))
-    dps_values = [100 * (100 + min(50, table_updater.crit + crit) * (table_updater.critmin + table_updater.critmax) / 200) /
-                  (100 + min(50, table_updater.crit) * (table_updater.critmin + table_updater.critmax) / 200) - 100
-                  for crit in crit_values]
-    fig_crit_dps = px.line(x=crit_values, y=dps_values, title='Crit Chance vs. DPS', labels={'x': 'Crit Chance', 'y': 'DPS'})
-    
-    return fig_investment_dps, fig_skills_dps, fig_crit_dps
 
 def plot_dps_curve():
     dps_curve_df = table_updater.calculate_dps_curve()
@@ -320,8 +293,8 @@ with gr.Blocks() as demo:
     graph_dps_curve = gr.Plot()
     
     
-    points_input.change(set_available_points, inputs=points_input)
-    demo.load(initialize, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input])
+    points_input.change(initialize, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input, graph_dps_curve ])
+    demo.load(initialize, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input, graph_dps_curve])
     
     #initialize_button.click(initialize_table, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input])
     
@@ -338,7 +311,5 @@ with gr.Blocks() as demo:
     aa_input.change(update_aa, inputs=aa_input, outputs=[summary_output, table_output, aa_input, total_invested_points])
     auto_optimize_button.click(automatic_optimization, inputs=points_input, outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input])
     
-   
-    points_input.change(plot_dps_curve, inputs=None, outputs=graph_dps_curve)
 
 demo.launch(server_name='0.0.0.0')
