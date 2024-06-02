@@ -1,3 +1,4 @@
 pydantic
 gradio
 pandas
+plotly
