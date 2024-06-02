@@ -239,7 +239,7 @@ def decrement_aa():
     summary_df, df = table_updater.decrement_level('aa')
     return summary_df, df, table_updater.levels['aa'], table_updater.get_total_invested_points()
 
-def initialize_table(base, crit, critmin, critmax, available_points):
+def initialize(base, crit, critmin, critmax, available_points):
     global table_updater
     table_updater = TableUpdater(base=base, crit=crit, critmin=critmin, critmax=critmax, data=delve_data, available_points=available_points)
     summary_df, df = table_updater.get_total_cost_and_dps(), table_updater.update_table()
@@ -285,15 +285,16 @@ def plot_dps_curve():
     return fig_dps_curve
 
 with gr.Blocks() as demo:
-    gr.Markdown("## Investment Table")
+    gr.Markdown("## Daoc magic DPS% optimizer")
     
     with gr.Row():
-        base_input = gr.Number(label="Base", value=224)
-        crit_input = gr.Number(label="Crit", value=0)
+        base_input = gr.Number(label="Base", value=280)
+        crit_input = gr.Number(label="Crit", value=10)
         critmin_input = gr.Number(label="Critmin", value=10)
         critmax_input = gr.Number(label="Critmax", value=50)
+        points_input = gr.Number(label="Points Available", value=50)
     
-    initialize_button = gr.Button("Initialize Table")
+    #initialize_button = gr.Button("Initialize Table")
     
     with gr.Row():
         mom_decrement_button = gr.Button("- MOM")
@@ -311,7 +312,6 @@ with gr.Blocks() as demo:
         aa_increment_button = gr.Button("+ AA")
     
     auto_optimize_button = gr.Button("Optimize")
-    points_input = gr.Number(label="Points Available", value=50)
     total_invested_points = gr.Number(label="Total Invested Points", value=0, interactive=False)
     summary_output = gr.Dataframe()
     table_output = gr.Dataframe()
@@ -319,8 +319,11 @@ with gr.Blocks() as demo:
    
     graph_dps_curve = gr.Plot()
     
+    
     points_input.change(set_available_points, inputs=points_input)
-    initialize_button.click(initialize_table, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input])
+    demo.load(initialize, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input])
+    
+    #initialize_button.click(initialize_table, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input])
     
     mom_increment_button.click(update_mom, inputs=None, outputs=[summary_output, table_output, mom_input, total_invested_points])
     wp_increment_button.click(update_wp, inputs=None, outputs=[summary_output, table_output, wp_input, total_invested_points])
@@ -338,4 +341,4 @@ with gr.Blocks() as demo:
    
     points_input.change(plot_dps_curve, inputs=None, outputs=graph_dps_curve)
 
-demo.launch()
+demo.launch(server_name='0.0.0.0')
