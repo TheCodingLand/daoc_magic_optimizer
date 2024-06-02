@@ -11,7 +11,7 @@ ADD . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Make port 80 available to the world outside this container
-EXPOSE 80
+EXPOSE 7860
 
 # Run app.py when the container launches
 CMD ["python", "daoc_casting_optimizer.py"]
