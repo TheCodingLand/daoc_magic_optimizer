@@ -116,7 +116,7 @@ class TableUpdater:
             summary.append({
                 "Skill": skill.upper(),
                 "Level": level,
-                "DPS": dps,
+                "DPS %": dps,
                 "Total Cost": self.data.costtotal[level],
                 "Next Point Cost": next_point_cost,
                 "Next DPS Gain per point": next_dps_gain_per_point
@@ -128,7 +128,7 @@ class TableUpdater:
         summary.append({
             "Skill": "TOTAL",
             "Level": "",
-            "DPS": total_dps,
+            "DPS %": total_dps,
             "Total Cost": total_cost,
             "Next Point Cost": "",
             "Next DPS Gain per point": ""
@@ -197,7 +197,7 @@ class TableUpdater:
 
         self.set_available_points(original_available_points)  # Restore original points
 
-        return pd.DataFrame(dps_curve, columns=["Total Investment Points", "Total DPS"])
+        return pd.DataFrame(dps_curve, columns=["Total Investment Points", "Total DPS %"])
 
 delve_data = DelveData()
 available_points = 50
@@ -254,20 +254,30 @@ def automatic_optimization(points_available: int):
 
 def plot_dps_curve():
     dps_curve_df = table_updater.calculate_dps_curve()
-    fig_dps_curve = px.line(dps_curve_df, x='Total Investment Points', y='Total DPS', title='Total DPS vs. Investment Points', height=700)
+    fig_dps_curve = px.line(dps_curve_df, x='Total Investment Points', y='Total DPS %', title='Total DPS % vs. Investment Points', height=700)
     return fig_dps_curve
 
 with gr.Blocks() as demo:
     gr.Markdown("## Daoc magic DPS% optimizer")
+    gr.Markdown("### Base stats")
     
     with gr.Row():
-        base_input = gr.Number(label="Base", value=280)
-        crit_input = gr.Number(label="Crit", value=10)
+        base_input = gr.Number(label="Acuity without RA but including all other buffs, items and bonus", value=280)
+        crit_input = gr.Number(label="Base Crit", value=10)
         critmin_input = gr.Number(label="Critmin", value=10)
         critmax_input = gr.Number(label="Critmax", value=50)
-        points_input = gr.Number(label="Points Available", value=50)
+    points_input = gr.Number(label="Points Available", value=50)
     
     #initialize_button = gr.Button("Initialize Table")
+    
+    auto_optimize_button = gr.Button("Optimize")
+    
+    total_invested_points = gr.Number(label="Total Invested Points", value=0, interactive=False)
+    
+    gr.Markdown("### Results summary")
+    summary_output = gr.Dataframe()
+
+    gr.Markdown("### Manual tweaking")
     
     with gr.Row():
         mom_decrement_button = gr.Button("- MOM")
@@ -284,16 +294,19 @@ with gr.Blocks() as demo:
         aa_input = gr.Number(label="AA Level", value=0)
         aa_increment_button = gr.Button("+ AA")
     
-    auto_optimize_button = gr.Button("Optimize")
-    total_invested_points = gr.Number(label="Total Invested Points", value=0, interactive=False)
-    summary_output = gr.Dataframe()
+    
+    
+    gr.Markdown("### RA stats calculated using the same formula as on http://tool.excidio.net/spelldamage.htm")
+    
     table_output = gr.Dataframe()
     
-   
+    
+    gr.Markdown("### Graph showing the diminishing return curve of %%DPS/Total cost for each invested point, based on optimal distribution.")
+    
     graph_dps_curve = gr.Plot()
     
+    points_input.change(set_available_points, inputs=points_input)
     
-    points_input.change(initialize, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input, graph_dps_curve ])
     demo.load(initialize, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input, graph_dps_curve])
     
     #initialize_button.click(initialize_table, inputs=[base_input, crit_input, critmin_input, critmax_input, points_input], outputs=[summary_output, table_output, mom_input, wp_input, aa_input, total_invested_points, points_input])
