@@ -189,7 +189,7 @@ class TableUpdater:
         dps_curve = []
         original_available_points = self.available_points
 
-        for points in range(0, original_available_points + 1):
+        for points in range(0, 120):
             self.set_available_points(points)
             self.optimize_levels()
             total_cost, total_dps_mom, total_dps_wp, total_dps_aa, total_dps = self.get_total_cost_and_dps()
@@ -245,7 +245,7 @@ def initialize(base, crit, critmin, critmax, available_points):
     summary_df, df = table_updater.get_total_cost_and_dps(), table_updater.update_table()
     summary = table_updater.get_summary()
     graph = plot_dps_curve()
-    return summary, df, 0, 0, 0, table_updater.get_total_invested_points(), available_points, graph
+    return summary, df, 0, 0, 0, 0, available_points, graph
 
 def automatic_optimization(points_available: int):
     summary_df, df, mom_level, wp_level, aa_level, invested_points = table_updater.optimize_levels()
@@ -301,7 +301,7 @@ with gr.Blocks() as demo:
     table_output = gr.Dataframe()
     
     
-    gr.Markdown("### Graph showing the diminishing return curve of %%DPS/Total cost for each invested point, based on optimal distribution.")
+    gr.Markdown("### Graph showing the diminishing return curve of % DPS/Total cost for each invested point, based on optimal distribution.")
     
     graph_dps_curve = gr.Plot()
     
